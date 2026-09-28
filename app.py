@@ -1,11 +1,7 @@
 import streamlit as st
+import nltk
 from nltk.sentiment import SentimentIntensityAnalyzer
 import plotly.graph_objects as go
-
-
-# =========================================================
-# PAGE CONFIGURATION
-# =========================================================
 
 st.set_page_config(
     page_title="LBR Insight Engine",
@@ -14,25 +10,10 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-
-# =========================================================
-# CUSTOM CSS
-# =========================================================
-
 st.markdown("""
 <style>
-
-.stApp {
-    background: #F4F7FB;
-}
-
-.block-container {
-    max-width: 1400px;
-    padding-top: 1.5rem;
-    padding-bottom: 3rem;
-}
-
-/* HEADER */
+.stApp { background: #F4F7FB; }
+.block-container { max-width: 1400px; padding-top: 1.5rem; padding-bottom: 3rem; }
 
 .brand {
     color: #1D4ED8;
@@ -57,9 +38,6 @@ st.markdown("""
     margin-bottom: 28px;
 }
 
-
-/* SECTION */
-
 .section-title {
     color: #0F172A;
     font-size: 25px;
@@ -74,9 +52,6 @@ st.markdown("""
     margin-bottom: 18px;
 }
 
-
-/* INPUT */
-
 .input-card {
     background: #FFFFFF;
     border: 1px solid #E2E8F0;
@@ -84,9 +59,6 @@ st.markdown("""
     padding: 24px;
     box-shadow: 0 5px 20px rgba(15, 23, 42, 0.05);
 }
-
-
-/* KPI */
 
 .kpi-card {
     background: #FFFFFF;
@@ -118,9 +90,6 @@ st.markdown("""
     margin-top: 3px;
 }
 
-
-/* PULSE */
-
 .pulse-card {
     background: #0F172A;
     border-radius: 18px;
@@ -148,9 +117,6 @@ st.markdown("""
     color: #94A3B8;
     font-size: 13px;
 }
-
-
-/* TOPIC */
 
 .topic-card {
     background: #FFFFFF;
@@ -181,9 +147,6 @@ st.markdown("""
     margin-top: 5px;
 }
 
-
-/* ACTION */
-
 .action-card {
     background: #0F172A;
     border-radius: 16px;
@@ -212,9 +175,6 @@ st.markdown("""
     margin-top: 7px;
 }
 
-
-/* INFO */
-
 .info-bar {
     background: #EFF6FF;
     border: 1px solid #BFDBFE;
@@ -223,9 +183,6 @@ st.markdown("""
     color: #1E3A8A;
     font-size: 13px;
 }
-
-
-/* BUTTON */
 
 .stButton > button {
     background: #1D4ED8;
@@ -242,9 +199,6 @@ st.markdown("""
     color: white;
 }
 
-
-/* FOOTER */
-
 .footer {
     text-align: center;
     color: #94A3B8;
@@ -253,180 +207,81 @@ st.markdown("""
     padding-top: 20px;
     border-top: 1px solid #E2E8F0;
 }
-
 </style>
 """, unsafe_allow_html=True)
 
 
-# =========================================================
-# SENTIMENT ANALYZER
-# =========================================================
+# Download VADER lexicon automatically when running on Streamlit Cloud
+try:
+    sia = SentimentIntensityAnalyzer()
+except LookupError:
+    nltk.download("vader_lexicon", quiet=True)
+    sia = SentimentIntensityAnalyzer()
 
-sia = SentimentIntensityAnalyzer()
-
-
-# =========================================================
-# BUSINESS REVIEW VALIDATION
-# =========================================================
 
 business_keywords = [
-    "food",
-    "taste",
-    "tasty",
-    "delicious",
-    "meal",
-    "restaurant",
-    "cafe",
-    "hotel",
-    "service",
-    "staff",
-    "waiter",
-    "employee",
-    "price",
-    "prices",
-    "expensive",
-    "cheap",
-    "cost",
-    "quality",
-    "portion",
-    "clean",
-    "cleanliness",
-    "dirty",
-    "hygiene",
-    "parking",
-    "atmosphere",
-    "ambience",
-    "environment",
-    "delivery",
-    "order",
-    "ordered",
-    "menu",
-    "customer",
-    "experience",
-    "wait",
-    "waiting",
-    "slow",
-    "fast",
-    "friendly",
-    "helpful",
+    "food", "taste", "tasty", "delicious", "meal", "restaurant", "cafe",
+    "hotel", "service", "staff", "waiter", "employee", "price", "prices",
+    "expensive", "cheap", "cost", "quality", "portion", "clean",
+    "cleanliness", "dirty", "hygiene", "parking", "atmosphere", "ambience",
+    "environment", "delivery", "order", "ordered", "menu", "customer",
+    "experience", "wait", "waiting", "slow", "fast", "friendly", "helpful",
     "comfortable"
 ]
 
 
 def is_business_review(text):
-
     text_lower = text.lower()
-
     return any(
         keyword in text_lower
         for keyword in business_keywords
     )
 
 
-# =========================================================
-# BUSINESS TOPICS
-# =========================================================
-
 topics = {
-
     "Food": [
-        "food",
-        "taste",
-        "tasty",
-        "delicious",
-        "biryani",
-        "meal",
-        "fresh",
-        "quality",
-        "portion"
+        "food", "taste", "tasty", "delicious", "biryani",
+        "meal", "fresh", "quality", "portion"
     ],
-
     "Service": [
-        "service",
-        "served",
-        "serving",
-        "customer service"
+        "service", "served", "serving", "customer service"
     ],
-
     "Staff": [
-        "staff",
-        "employee",
-        "waiter",
-        "workers",
-        "friendly",
-        "helpful"
+        "staff", "employee", "waiter", "workers",
+        "friendly", "helpful"
     ],
-
     "Price": [
-        "price",
-        "prices",
-        "expensive",
-        "cheap",
-        "cost",
-        "value",
-        "portion"
+        "price", "prices", "expensive", "cheap",
+        "cost", "value", "portion"
     ],
-
     "Cleanliness": [
-        "clean",
-        "cleanliness",
-        "dirty",
-        "hygiene"
+        "clean", "cleanliness", "dirty", "hygiene"
     ],
-
     "Parking": [
-        "parking",
-        "park",
-        "car"
+        "parking", "park", "car"
     ],
-
     "Atmosphere": [
-        "atmosphere",
-        "ambience",
-        "environment",
-        "beautiful",
-        "comfortable"
+        "atmosphere", "ambience", "environment",
+        "beautiful", "comfortable"
     ],
-
     "Waiting Time": [
-        "waiting",
-        "waited",
-        "wait",
-        "slow",
-        "minutes",
-        "time"
+        "waiting", "waited", "wait", "slow",
+        "minutes", "time"
     ]
 }
 
 
-# =========================================================
-# HEADER
-# =========================================================
-
 st.html("""
-<div class="brand">
-    LBR / INSIGHT ENGINE
-</div>
-
-<div class="hero">
-    Local Business Review Intelligence
-</div>
-
+<div class="brand">LBR / INSIGHT ENGINE</div>
+<div class="hero">Local Business Review Intelligence</div>
 <div class="hero-sub">
     Turn customer feedback into clear business insights and actionable decisions.
 </div>
 """)
 
 
-# =========================================================
-# INPUT SECTION
-# =========================================================
-
 st.html("""
-<div class="section-title">
-    Analyze Customer Feedback
-</div>
-
+<div class="section-title">Analyze Customer Feedback</div>
 <div class="section-subtitle">
     Enter a business and paste customer reviews to generate an instant insight report.
 </div>
@@ -442,10 +297,7 @@ business_name = st.text_input(
 reviews = st.text_area(
     "Customer Reviews",
     height=190,
-    placeholder=(
-        "Paste customer reviews here...\n\n"
-        "Use one review per line."
-    )
+    placeholder="Paste customer reviews here...\n\nUse one review per line."
 )
 
 
@@ -459,35 +311,15 @@ analyze = st.button(
 )
 
 
-# =========================================================
-# ANALYSIS
-# =========================================================
-
 if analyze:
 
-    # -----------------------------------------------------
-    # BUSINESS NAME CHECK
-    # -----------------------------------------------------
-
     if not business_name.strip():
-
         st.warning("Please enter a business name.")
 
-
-    # -----------------------------------------------------
-    # REVIEW CHECK
-    # -----------------------------------------------------
-
     elif not reviews.strip():
-
         st.warning("Please paste some customer reviews.")
 
-
     else:
-
-        # -------------------------------------------------
-        # SPLIT REVIEWS
-        # -------------------------------------------------
 
         review_list = [
             review.strip()
@@ -495,17 +327,11 @@ if analyze:
             if review.strip()
         ]
 
-
-        # -------------------------------------------------
-        # IRRELEVANT INPUT CHECK
-        # -------------------------------------------------
-
         invalid_reviews = [
             review
             for review in review_list
             if not is_business_review(review)
         ]
-
 
         if invalid_reviews:
 
@@ -528,10 +354,6 @@ if analyze:
             st.stop()
 
 
-        # -------------------------------------------------
-        # SENTIMENT COUNTS
-        # -------------------------------------------------
-
         positive = 0
         neutral = 0
         negative = 0
@@ -539,29 +361,21 @@ if analyze:
         results = []
 
 
-        # -------------------------------------------------
-        # SENTIMENT ANALYSIS
-        # -------------------------------------------------
-
         for review in review_list:
 
             score = sia.polarity_scores(review)["compound"]
 
             if score >= 0.05:
-
                 sentiment = "Positive"
                 positive += 1
 
             elif score <= -0.05:
-
                 sentiment = "Negative"
                 negative += 1
 
             else:
-
                 sentiment = "Neutral"
                 neutral += 1
-
 
             results.append({
                 "review": review,
@@ -570,20 +384,20 @@ if analyze:
             })
 
 
-        # -------------------------------------------------
-        # PERCENTAGES
-        # -------------------------------------------------
-
         total = len(review_list)
 
-        positive_pct = round((positive / total) * 100)
-        neutral_pct = round((neutral / total) * 100)
-        negative_pct = round((negative / total) * 100)
+        positive_pct = round(
+            (positive / total) * 100
+        )
 
+        neutral_pct = round(
+            (neutral / total) * 100
+        )
 
-        # -------------------------------------------------
-        # TOPIC DATA
-        # -------------------------------------------------
+        negative_pct = round(
+            (negative / total) * 100
+        )
+
 
         topic_data = {}
 
@@ -596,10 +410,6 @@ if analyze:
                 "reviews": []
             }
 
-
-        # -------------------------------------------------
-        # MATCH REVIEWS TO TOPICS
-        # -------------------------------------------------
 
         for item in results:
 
@@ -621,40 +431,26 @@ if analyze:
                     topic_data[topic]["reviews"].append(item)
 
 
-        # =================================================
-        # BUSINESS HEADER
-        # =================================================
-
         st.divider()
 
-        st.html(f"""
-        <div class="section-title">
-            {business_name}
-        </div>
 
+        st.html(f"""
+        <div class="section-title">{business_name}</div>
         <div class="section-subtitle">
             Customer intelligence generated from {total} review(s)
         </div>
         """)
 
 
-        # =================================================
-        # CUSTOMER PULSE
-        # =================================================
-
         st.html("""
-        <div class="section-title">
-            Customer Pulse
-        </div>
+        <div class="section-title">Customer Pulse</div>
         """)
 
 
-        c1, c2, c3, c4 = st.columns([1.2, 1, 1, 1])
+        c1, c2, c3, c4 = st.columns(
+            [1.2, 1, 1, 1]
+        )
 
-
-        # -------------------------------------------------
-        # PULSE
-        # -------------------------------------------------
 
         with c1:
 
@@ -662,109 +458,57 @@ if analyze:
 
             st.html(f"""
             <div class="pulse-card">
-
-                <div class="pulse-label">
-                    CUSTOMER SENTIMENT
-                </div>
-
-                <div class="pulse-number">
-                    {pulse_score:+d}
-                </div>
-
+                <div class="pulse-label">CUSTOMER SENTIMENT</div>
+                <div class="pulse-number">{pulse_score:+d}</div>
                 <div class="pulse-caption">
                     Positive vs. negative balance
                 </div>
-
             </div>
             """)
 
-
-        # -------------------------------------------------
-        # POSITIVE
-        # -------------------------------------------------
 
         with c2:
 
             st.html(f"""
             <div class="kpi-card">
-
-                <div class="kpi-label">
-                    Positive
-                </div>
-
-                <div class="kpi-number">
-                    {positive_pct}%
-                </div>
-
-                <div class="kpi-caption">
-                    {positive} review(s)
-                </div>
-
+                <div class="kpi-label">Positive</div>
+                <div class="kpi-number">{positive_pct}%</div>
+                <div class="kpi-caption">{positive} review(s)</div>
             </div>
             """)
 
-
-        # -------------------------------------------------
-        # NEUTRAL
-        # -------------------------------------------------
 
         with c3:
 
             st.html(f"""
             <div class="kpi-card">
-
-                <div class="kpi-label">
-                    Neutral
-                </div>
-
-                <div class="kpi-number">
-                    {neutral_pct}%
-                </div>
-
-                <div class="kpi-caption">
-                    {neutral} review(s)
-                </div>
-
+                <div class="kpi-label">Neutral</div>
+                <div class="kpi-number">{neutral_pct}%</div>
+                <div class="kpi-caption">{neutral} review(s)</div>
             </div>
             """)
 
-
-        # -------------------------------------------------
-        # NEGATIVE
-        # -------------------------------------------------
 
         with c4:
 
             st.html(f"""
             <div class="kpi-card">
-
-                <div class="kpi-label">
-                    Negative
-                </div>
-
-                <div class="kpi-number">
-                    {negative_pct}%
-                </div>
-
-                <div class="kpi-caption">
-                    {negative} review(s)
-                </div>
-
+                <div class="kpi-label">Negative</div>
+                <div class="kpi-number">{negative_pct}%</div>
+                <div class="kpi-caption">{negative} review(s)</div>
             </div>
             """)
 
 
-        # =================================================
-        # SENTIMENT DISTRIBUTION
-        # =================================================
-
         st.html("""
-        <div class="section-title">
-            Sentiment Distribution
-        </div>
+        <div class="section-title">Sentiment Distribution</div>
         """)
 
-        st.progress(positive_pct / 100)
+
+        st.progress(
+            positive_pct / 100
+        )
+
 
         st.caption(
             f"Positive: {positive_pct}%   •   "
@@ -772,10 +516,6 @@ if analyze:
             f"Negative: {negative_pct}%"
         )
 
-
-        # =================================================
-        # TOPIC ANALYSIS
-        # =================================================
 
         positive_topics = []
         negative_topics = []
@@ -819,17 +559,11 @@ if analyze:
         )
 
 
-        # =================================================
-        # BUSINESS PRIORITIES
-        # =================================================
-
         st.divider()
 
-        st.html("""
-        <div class="section-title">
-            Business Priorities
-        </div>
 
+        st.html("""
+        <div class="section-title">Business Priorities</div>
         <div class="section-subtitle">
             Key themes detected from customer feedback.
         </div>
@@ -838,10 +572,6 @@ if analyze:
 
         left, right = st.columns(2)
 
-
-        # =================================================
-        # POSITIVE TRENDS
-        # =================================================
 
         with left:
 
@@ -856,14 +586,17 @@ if analyze:
 
             if top_positive:
 
-                for index, (topic, count, mentions) in enumerate(
+                for index, (
+                    topic,
+                    count,
+                    mentions
+                ) in enumerate(
                     top_positive,
                     start=1
                 ):
 
                     st.html(f"""
                     <div class="topic-card">
-
                         <div class="topic-number">
                             STRENGTH {index:02d}
                         </div>
@@ -876,7 +609,6 @@ if analyze:
                             {count} positive signal(s)
                             across {mentions} mention(s)
                         </div>
-
                     </div>
                     """)
 
@@ -886,10 +618,6 @@ if analyze:
                     "No clear positive trends detected."
                 )
 
-
-        # =================================================
-        # NEGATIVE ISSUES
-        # =================================================
 
         with right:
 
@@ -904,14 +632,17 @@ if analyze:
 
             if top_negative:
 
-                for index, (topic, count, mentions) in enumerate(
+                for index, (
+                    topic,
+                    count,
+                    mentions
+                ) in enumerate(
                     top_negative,
                     start=1
                 ):
 
                     st.html(f"""
                     <div class="topic-card">
-
                         <div class="topic-number">
                             ISSUE {index:02d}
                         </div>
@@ -924,7 +655,6 @@ if analyze:
                             {count} negative signal(s)
                             across {mentions} mention(s)
                         </div>
-
                     </div>
                     """)
 
@@ -935,17 +665,11 @@ if analyze:
                 )
 
 
-        # =================================================
-        # REVIEW INTELLIGENCE MAP
-        # =================================================
-
         st.divider()
 
-        st.html("""
-        <div class="section-title">
-            Review Intelligence Map
-        </div>
 
+        st.html("""
+        <div class="section-title">Review Intelligence Map</div>
         <div class="section-subtitle">
             Positive and negative signals across business topics.
         </div>
@@ -1002,26 +726,19 @@ if analyze:
 
 
             fig.update_layout(
-
                 barmode="group",
-
                 height=430,
-
                 margin=dict(
                     l=20,
                     r=20,
                     t=30,
                     b=80
                 ),
-
                 paper_bgcolor="white",
-
                 plot_bgcolor="white",
-
                 font=dict(
                     color="#0F172A"
                 ),
-
                 legend=dict(
                     orientation="h",
                     yanchor="bottom",
@@ -1029,11 +746,9 @@ if analyze:
                     xanchor="right",
                     x=1
                 ),
-
                 xaxis=dict(
                     title="Business Topic"
                 ),
-
                 yaxis=dict(
                     title="Review Signals",
                     dtick=1
@@ -1053,17 +768,11 @@ if analyze:
             )
 
 
-        # =================================================
-        # AI STRATEGIST
-        # =================================================
-
         st.divider()
 
-        st.html("""
-        <div class="section-title">
-            AI Strategist
-        </div>
 
+        st.html("""
+        <div class="section-title">AI Strategist</div>
         <div class="section-subtitle">
             Suggested actions based on detected customer issues.
         </div>
@@ -1072,10 +781,6 @@ if analyze:
 
         advice = []
 
-
-        # -------------------------------------------------
-        # GENERATE ADVICE
-        # -------------------------------------------------
 
         for topic, count, mentions in top_negative:
 
@@ -1152,13 +857,12 @@ if analyze:
                 )
 
 
-        # -------------------------------------------------
-        # DISPLAY ADVICE
-        # -------------------------------------------------
-
         if advice:
 
-            for index, (title, description) in enumerate(
+            for index, (
+                title,
+                description
+            ) in enumerate(
                 advice[:3],
                 start=1
             ):
@@ -1188,10 +892,6 @@ if analyze:
                 "Continue monitoring customer feedback."
             )
 
-
-# =========================================================
-# FOOTER
-# =========================================================
 
 st.html("""
 <div class="footer">
